@@ -1,0 +1,239 @@
+# Personal AI Content Studio MVP - Local Development
+
+## Backend Dependencies
+
+# Web Framework
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+
+# Agent Orchestration
+langgraph==0.0.35
+langchain==0.1.0
+langchain-community==0.0.10
+
+# LLM Clients
+langchain-anthropic==0.1.1
+langchain-openai==0.1.0
+
+# Azure Services (optional, for cloud LLM + Key Vault fallback)
+azure-identity==1.14.0
+azure-keyvault-secrets==4.7.0
+azure-cognitiveservices-language-textanalytics==5.2.0
+azure-search-documents==11.4.0
+
+# Cloud LLM APIs (optional)
+anthropic==0.7.10
+openai==1.3.0
+
+# Web Search
+requests==2.31.0
+beautifulsoup4==4.12.2
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Secrets Management (PRIMARY)
+keyring==24.3.0
+
+# Config & Environment
+pyyaml==6.4.0
+python-dotenv==1.0.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+uuid6==1.0.3
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+
+# Code Quality (Dev)
+black==23.12.0
+flake8==6.1.0
+mypy==1.7.1
+isort==5.13.2
+
+## Frontend Dependencies (Streamlit)
+
+streamlit==1.29.0
+streamlit-mermaid==0.1.24
+streamlit-plotly-events==0.0.6
+plotly==5.18.0
+pandas==2.1.3
+
+## Optional Dependencies
+
+# For GitHub Copilot integration (if available via pip)
+# github-copilot==<version>  # Usually installed via GitHub CLI
+
+# For PlantUML rendering
+jinja2==3.1.2
+
+# For visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Performance
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Logging & Monitoring
+python-json-logger==2.0.7
+
+---
+
+## Installation
+
+### Basic Setup (Keyring Primary, No Cloud)
+
+```bash
+pip install -r requirements.txt
+
+# This installs everything including keyring (primary secrets)
+# No Azure subscription required
+```
+
+### Optional: Cloud Services (LLM + Key Vault)
+
+```bash
+# Already included in requirements.txt:
+# - azure-identity (for Key Vault fallback)
+# - azure-keyvault-secrets (for Key Vault access)
+# - anthropic (for direct Claude API)
+# - openai (for direct OpenAI API)
+
+# Just set environment variable:
+export AZURE_KEYVAULT_NAME="kv-content-studio-xxxxx"
+```
+
+### Development Setup (with Code Quality Tools)
+
+```bash
+pip install -r requirements.txt
+pip install pre-commit
+
+# Setup pre-commit hooks
+pre-commit install
+```
+
+---
+
+## Version Notes
+
+- **Python 3.11+** required (type hints, async improvements)
+- **SQLite3** (built into Python, no separate install)
+- **keyring 24.3.0+** for OS credential storage (primary secrets)
+- **Azure SDK** versions tested with Azure CLI 2.55.0+
+- **Streamlit 1.29.0+** required for mermaid support
+
+---
+
+## Optional Dependencies (Not Included)
+
+If you want additional features later:
+
+```bash
+# For code generation from Copilot agent mode
+pip install github-copilot  # Usually via GitHub CLI, not pip
+
+# For additional data formats
+pip install openpyxl  # Excel export
+pip install markdown  # Markdown output
+
+# For API documentation
+pip install swagger-ui-py  # Swagger UI for FastAPI
+
+# For advanced visualization
+pip install graphviz  # For PlantUML rendering
+```
+
+---
+
+## Requirements by Purpose
+
+### Core MVP (Minimal)
+
+```bash
+pip install fastapi uvicorn pydantic
+pip install langgraph langchain langchain-anthropic
+pip install requests beautifulsoup4
+pip install sqlalchemy
+pip install keyring pyyaml
+pip install streamlit streamlit-mermaid
+```
+
+### Full Local MVP (Recommended)
+
+```bash
+# Include everything in requirements.txt
+pip install -r requirements.txt
+```
+
+### Enterprise/Cloud Ready (Future)
+
+Add Azure SDKs:
+```bash
+pip install azure-identity azure-keyvault-secrets
+pip install azure-cognitiveservices-language-textanalytics
+```
+
+---
+
+## Troubleshooting
+
+**Issue**: `ModuleNotFoundError: No module named 'keyring'`  
+**Solution**: `pip install keyring`
+
+**Issue**: `stale path: ./.venv` with pyenv or other env managers  
+**Solution**: Use `python -m pip install ...` instead of `pip install`
+
+**Issue**: Azure SDK modules not found  
+**Solution**: Azure SDKs optional. Only needed if using Key Vault fallback. Install with:  
+```bash
+pip install azure-identity azure-keyvault-secrets
+```
+
+**Issue**: Streamlit mermaid not rendering  
+**Solution**: Update Streamlit: `pip install --upgrade streamlit`
+
+---
+
+## Update Flow
+
+```bash
+# Check for updates
+pip list --outdated
+
+# Update specific package
+pip install --upgrade keyring
+
+# Update all
+pip install --upgrade -r requirements.txt
+
+# Create locked requirements (optional)
+pip freeze > requirements-lock.txt
+```
+
+---
+
+## Clean Install (Start Fresh)
+
+```bash
+# Remove venv
+rm -rf .venv
+
+# Recreate
+python3.11 -m venv .venv
+source .venv/bin/activate
+
+# Fresh install
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Verify
+python -c "import keyring, fastapi, streamlit; print('✓ All installed')"
+```

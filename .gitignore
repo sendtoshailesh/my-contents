@@ -1,0 +1,238 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ========================================================
+# PROJECT-SPECIFIC EXCLUDES (Secrets, Local Data)
+# ========================================================
+
+# Local data directory (contains database, logs, config)
+.content-studio/
+
+# Database files
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Secrets / Environment
+.env
+.env.local
+.env.*.local
+secrets.yaml
+secrets.yml
+.secrets.enc
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+*.sublime-project
+*.sublime-workspace
+
+# OS specific
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Logs
+logs/
+*.log
+
+# Package management
+poetry.lock
+Pipfile.lock
+
+# Virtual environments (already covered above, but explicit)
+.venv/
+venv/
+virtualenv/
+
+# Test/Debug artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# IDEs (specific)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/*
+!.idea/runConfigurations
+
+# macOS
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local development artifacts
+local_config.yaml
+local_*.py
+
+# Streamlit cache
+.streamlit/
+
+# FastAPI generated
+.generated/
+
+# ========================================================
+# IMPORTANT: What is NOT ignored
+# ========================================================
+#
+# ✓ .env.example (template - safe, no secrets)
+# ✓ requirements.txt (dependencies - safe)
+# ✓ config.yaml.example (template - safe)
+# ✓ All source code (*.py files)
+# ✓ All documentation (*.md files)
+# ✓ All specs and design files
+#
+# ✗ .env, .secrets.enc, *.db files (secrets and data)
+# ✗ node_modules, venv, __pycache__ (generated)
+# ✗ .vscode with secrets, IDE settings
+# ✗ Local build/dist artifacts
