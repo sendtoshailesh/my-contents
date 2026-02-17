@@ -122,7 +122,7 @@ class ResearchAgent:
             for claim in claims:
                 try:
                     # Search for claim
-                    search_results = self.search.search(claim["text"], max_results=5)
+                    search_results = self.search.search(claim["text"], count=5)
                     
                     # Score credibility
                     credibility_score = self._score_credibility(search_results)

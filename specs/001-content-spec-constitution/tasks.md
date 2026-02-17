@@ -248,51 +248,51 @@ Tasks are organized by user story to enable:
 ### Tasks
 
 #### Platform Agent
-- [ ] T086 [US3] Create backend/agents/platform_agent.py with platform adaptation logic using Llama 3.1 (cost-effective)
-- [ ] T087 [US3] Load platform templates from reference data in platform_agent.py (tone, format, min/max length, visual requirements)
-- [ ] T088 [US3] Generate LinkedIn version in platform_agent.py (professional, bullet points, hashtags, 500-3000 chars)
-- [ ] T089 [US3] Generate Twitter/X thread in platform_agent.py (conversational, max 280 chars/tweet, 10-thread max)
-- [ ] T090 [US3] Generate Reddit post in platform_agent.py (authentic, markdown, long-form OK, 300-40000 chars)
-- [ ] T091 [US3] Generate Medium article in platform_agent.py (narrative, blog-style, section headers, 1000-10000 chars)
-- [ ] T092 [US3] Generate Substack newsletter in platform_agent.py (conversational, intimate, 800-8000 chars)
-- [ ] T093 [US3] Generate Instagram caption in platform_agent.py (visual-first, concise, 100-2200 chars, emojis)
-- [ ] T094 [US3] Create PlatformVersion ORM instances for each platform (6 total) with content, version=1
-- [ ] T095 [US3] Implement iteration logic in platform_agent.py (regenerate based on feedback areas)
+- [x] T086 [US3] Create backend/agents/platform_agent.py with platform adaptation logic using Llama 3.1 (cost-effective)
+- [x] T087 [US3] Load platform templates from reference data in platform_agent.py (tone, format, min/max length, visual requirements)
+- [x] T088 [US3] Generate LinkedIn version in platform_agent.py (professional, bullet points, hashtags, 500-3000 chars)
+- [x] T089 [US3] Generate Twitter/X thread in platform_agent.py (conversational, max 280 chars/tweet, 10-thread max)
+- [x] T090 [US3] Generate Reddit post in platform_agent.py (authentic, markdown, long-form OK, 300-40000 chars)
+- [x] T091 [US3] Generate Medium article in platform_agent.py (narrative, blog-style, section headers, 1000-10000 chars)
+- [x] T092 [US3] Generate Substack newsletter in platform_agent.py (conversational, intimate, 800-8000 chars)
+- [x] T093 [US3] Generate Instagram caption in platform_agent.py (visual-first, concise, 100-2200 chars, emojis)
+- [x] T094 [US3] Create PlatformVersion ORM instances for each platform (6 total) with content, version=1
+- [x] T095 [US3] Implement iteration logic in platform_agent.py (regenerate based on feedback areas)
 
 #### Iteration & Feedback
-- [ ] T096 [US3] Create backend/agents/iteration_handler.py to process user feedback
-- [ ] T097 [US3] Implement feedback area categorization in iteration_handler.py (tone, depth, visuals, technicality, humor, examples, structure)
-- [ ] T098 [US3] Determine affected components in iteration_handler.py (content draft, platform versions, visuals)
-- [ ] T099 [US3] Regenerate content based on feedback in iteration_handler.py (call content_agent or platform_agent)
-- [ ] T100 [US3] Create IterationFeedback ORM instance with iteration_number, feedback_areas, regenerated_content
-- [ ] T101 [US3] Detect "ok and good" phrase in iteration_handler.py (mark session as completed)
+- [x] T096 [US3] Create backend/agents/iteration_handler.py to process user feedback
+- [x] T097 [US3] Implement feedback area categorization in iteration_handler.py (tone, depth, visuals, technicality, humor, examples, structure)
+- [x] T098 [US3] Determine affected components in iteration_handler.py (content draft, platform versions, visuals)
+- [x] T099 [US3] Regenerate content based on feedback in iteration_handler.py (call content_agent or platform_agent)
+- [x] T100 [US3] Create IterationFeedback ORM instance with iteration_number, feedback_areas, regenerated_content
+- [x] T101 [US3] Detect "ok and good" phrase in iteration_handler.py (mark session as completed)
 
 #### LangGraph Orchestration (Complete)
-- [ ] T102 [US3] Add nodes to state_graph.py for platform_agent and iteration_handler
-- [ ] T103 [US3] Add conditional edge: after content draft → platform_review
-- [ ] T104 [US3] Add loop edge: platform_review → (if feedback) → iteration → platform_review, else → completed
-- [ ] T105 [US3] Update SessionState to include platform_versions, iteration_feedback, iteration_count
+- [x] T102 [US3] Add nodes to state_graph.py for platform_agent and iteration_handler
+- [x] T103 [US3] Add conditional edge: after content draft → platform_review
+- [x] T104 [US3] Add loop edge: platform_review → (if feedback) → iteration → platform_review, else → completed
+- [x] T105 [US3] Update SessionState to include platform_versions, iteration_feedback, iteration_count
 
 #### API Endpoints
-- [ ] T106 [US3] Implement POST /api/sessions/{id}/platforms endpoint (generate all platform versions)
-- [ ] T107 [US3] Implement GET /api/sessions/{id}/platforms endpoint (retrieve all platform versions)
-- [ ] T108 [US3] Implement POST /api/sessions/{id}/iterate endpoint (submit feedback, regenerate)
-- [ ] T109 [US3] Implement POST /api/sessions/{id}/complete endpoint (mark session as "ok and good")
+- [x] T106 [US3] Implement POST /api/sessions/{id}/platforms endpoint (generate all platform versions)
+- [x] T107 [US3] Implement GET /api/sessions/{id}/platforms endpoint (retrieve all platform versions)
+- [x] T108 [US3] Implement POST /api/sessions/{id}/iterate endpoint (submit feedback, regenerate)
+- [x] T109 [US3] Implement POST /api/sessions/{id}/complete endpoint (mark session as "ok and good")
 
 #### Frontend UI
-- [ ] T110 [US3] Create frontend/components/platform_versions.py to display all 6 platform outputs
-- [ ] T111 [US3] Add platform-specific preview formatting in platform_versions.py (LinkedIn bullets, Twitter thread, etc.)
-- [ ] T112 [US3] Create frontend/components/iteration_loop.py with feedback form (checkboxes for improvement areas + freeform text)
-- [ ] T113 [US3] Display iteration count in iteration_loop.py (e.g., "Refinement cycle 2 of 3")
-- [ ] T114 [US3] Add "ok and good" button in iteration_loop.py to complete session
-- [ ] T115 [US3] Show regenerated content after iteration in platform_versions.py (highlight changed sections)
+- [x] T110 [US3] Create frontend/components/platform_versions.py to display all 6 platform outputs
+- [x] T111 [US3] Add platform-specific preview formatting in platform_versions.py (LinkedIn bullets, Twitter thread, etc.)
+- [x] T112 [US3] Create frontend/components/iteration_loop.py with feedback form (checkboxes for improvement areas + freeform text)
+- [x] T113 [US3] Display iteration count in iteration_loop.py (e.g., "Refinement cycle 2 of 3")
+- [x] T114 [US3] Add "ok and good" button in iteration_loop.py to complete session
+- [x] T115 [US3] Show regenerated content after iteration in platform_versions.py (highlight changed sections)
 
 #### Testing
-- [ ] T116 [US3] Write unit test for platform_agent.py (test LinkedIn and Twitter generation)
-- [ ] T117 [US3] Write unit test for iteration_handler.py (test feedback processing and component selection)
-- [ ] T118 [US3] Write integration test for US3 (content draft → platforms → iteration → "ok and good")
-- [ ] T119 [US3] Test iteration limit (verify system handles 5+ iterations gracefully)
-- [ ] T120 [US3] Test "ok and good" phrase detection (case-insensitive, partial match)
+- [x] T116 [US3] Write unit test for platform_agent.py (test LinkedIn and Twitter generation)
+- [x] T117 [US3] Write unit test for iteration_handler.py (test feedback processing and component selection)
+- [x] T118 [US3] Write integration test for US3 (content draft → platforms → iteration → "ok and good")
+- [x] T119 [US3] Test iteration limit (verify system handles 5+ iterations gracefully)
+- [x] T120 [US3] Test "ok and good" phrase detection (case-insensitive, partial match)
 
 **Completion Criteria for User Story 3**:
 - ✅ System generates 6 platform-specific versions from content draft
@@ -315,38 +315,38 @@ Tasks are organized by user story to enable:
 ### Tasks
 
 #### Session History
-- [ ] T121 Create frontend/pages/2_History.py to display all sessions (max 10, sorted by created_at DESC)
-- [ ] T122 Add session summary cards in 2_History.py (topic, status, iteration count, created date)
-- [ ] T123 [P] Implement session detail view in 2_History.py (show outline, content draft, platform versions)
-- [ ] T124 [P] Add resume session feature in 2_History.py (load incomplete session, continue from last state)
+- [x] T121 Create frontend/pages/2_History.py to display all sessions (max 10, sorted by created_at DESC)
+- [x] T122 Add session summary cards in 2_History.py (topic, status, iteration count, created date)
+- [x] T123 [P] Implement session detail view in 2_History.py (show outline, content draft, platform versions)
+- [x] T124 [P] Add resume session feature in 2_History.py (load incomplete session, continue from last state)
 
 #### Settings & Configuration
-- [ ] T125 Create frontend/pages/3_Settings.py with model selection UI (choose default LLM model)
-- [ ] T126 [P] Add platform preferences in 3_Settings.py (enable/disable specific platforms)
-- [ ] T127 [P] Add visual preferences in 3_Settings.py (default visual types, opt-in/opt-out default)
-- [ ] T128 [P] Add session limit configuration in 3_Settings.py (max sessions, auto-cleanup toggle)
+- [x] T125 Create frontend/pages/3_Settings.py with model selection UI (choose default LLM model)
+- [x] T126 [P] Add platform preferences in 3_Settings.py (enable/disable specific platforms)
+- [x] T127 [P] Add visual preferences in 3_Settings.py (default visual types, opt-in/opt-out default)
+- [x] T128 [P] Add session limit configuration in 3_Settings.py (max sessions, auto-cleanup toggle)
 
 #### Error Handling & Logging
-- [ ] T129 Add comprehensive error handling to all agents (try/except with logging)
-- [ ] T130 Create backend/utils/logger.py with Python logging configuration (console + file output)
-- [ ] T131 [P] Add request/response logging to FastAPI middleware
-- [ ] T132 [P] Add user-friendly error messages in Streamlit (avoid technical stack traces)
+- [x] T129 Add comprehensive error handling to all agents (try/except with logging)
+- [x] T130 Create backend/utils/logger.py with Python logging configuration (console + file output)
+- [x] T131 [P] Add request/response logging to FastAPI middleware
+- [x] T132 [P] Add user-friendly error messages in Streamlit (avoid technical stack traces)
 
 #### Session Cleanup & Maintenance
-- [ ] T133 Implement auto-cleanup logic in backend/main.py startup event (delete sessions beyond max 10)
-- [ ] T134 [P] Add manual cleanup button in 3_Settings.py (delete old sessions on demand)
-- [ ] T135 [P] Create backup/export feature in 2_History.py (export session as JSON)
+- [x] T133 Implement auto-cleanup logic in backend/main.py startup event (delete sessions beyond max 10)
+- [x] T134 [P] Add manual cleanup button in 3_Settings.py (delete old sessions on demand)
+- [x] T135 [P] Create backup/export feature in 2_History.py (export session as JSON)
 
 #### Final UI Polish
-- [ ] T136 Add loading spinners to Streamlit UI (during agent execution)
-- [ ] T137 [P] Add progress indicators in 1_New_Session.py (show current step: input → outline → framework → content → platforms)
-- [ ] T138 [P] Improve session state management in Streamlit (ensure state persists across reruns)
-- [ ] T139 [P] Add tooltips and help text to all UI components
+- [x] T136 Add loading spinners to Streamlit UI (during agent execution)
+- [x] T137 [P] Add progress indicators in 1_New_Session.py (show current step: input → outline → framework → content → platforms)
+- [x] T138 [P] Improve session state management in Streamlit (ensure state persists across reruns)
+- [x] T139 [P] Add tooltips and help text to all UI components
 
 #### Documentation
-- [ ] T140 Create README.md with quick start guide (setup, run, first session)
-- [ ] T141 [P] Create CONTRIBUTING.md with development workflow (test, lint, commit)
-- [ ] T142 [P] Update quickstart-LOCAL.md with end-to-end walkthrough using real scenario
+- [x] T140 Create README.md with quick start guide (setup, run, first session)
+- [x] T141 [P] Create CONTRIBUTING.md with development workflow (test, lint, commit)
+- [x] T142 [P] Update quickstart-LOCAL.md with end-to-end walkthrough using real scenario
 
 **Completion Criteria for Phase 6**:
 - ✅ User can view all session history (max 10)

@@ -29,30 +29,39 @@ async def lifespan(app: FastAPI):
     db = get_db_session()
     
     try:
-        # Delete sessions older than 30 days
+        # Step 1: Delete sessions older than 30 days
         cutoff_date = datetime.utcnow() - timedelta(days=30)
         old_sessions = db.query(SessionModel).filter(SessionModel.created_at < cutoff_date).all()
         
         if old_sessions:
-            logger.info(f"🗑️  Deleting {len(old_sessions)} old sessions")
+            logger.info(f"🗑️  Deleting {len(old_sessions)} sessions older than 30 days")
             for session in old_sessions:
-                db.delete(session)
+                try:
+                    db.delete(session)
+                except Exception as e:
+                    logger.error(f"Error deleting session {session.id}: {e}")
             db.commit()
         
-        # Keep only max 10 sessions per user
-        db_session = get_db_session()
-        user_sessions = db_session.query(SessionModel).order_by(SessionModel.created_at.desc()).all()
+        # Step 2: Keep only max 10 sessions (delete excessive ones)
+        all_sessions = db.query(SessionModel).order_by(SessionModel.created_at.desc()).all()
         
-        if len(user_sessions) > 10:
-            logger.info(f"⚠️  Found {len(user_sessions)} sessions, keeping last 10")
-            sessions_to_delete = user_sessions[10:]
+        if len(all_sessions) > 10:
+            logger.info(f"⚠️  Found {len(all_sessions)} sessions, keeping last 10")
+            sessions_to_delete = all_sessions[10:]
             for session in sessions_to_delete:
-                db.delete(session)
+                try:
+                    db.delete(session)
+                except Exception as e:
+                    logger.error(f"Error deleting session {session.id}: {e}")
             db.commit()
+            logger.info(f"✅ Pruned {len(sessions_to_delete)} excess sessions")
         
-        logger.info("✅ Startup complete")
+        # Step 3: Log session status
+        remaining_sessions = db.query(SessionModel).count()
+        logger.info(f"✅ Startup complete - {remaining_sessions} active sessions")
+        
     except Exception as e:
-        logger.error(f"❌ Startup error: {e}", exc_info=True)
+        logger.error(f"❌ Startup error during cleanup: {e}", exc_info=True)
     finally:
         db.close()
     
@@ -83,25 +92,55 @@ app.add_middleware(
 # Error handling middleware
 @app.middleware("http")
 async def error_handling_middleware(request: Request, call_next):
-    """Global error handling middleware"""
+    """Global error handling middleware with detailed logging"""
     try:
         response = await call_next(request)
+        
+        # Log successful responses with high status codes
+        if response.status_code >= 400:
+            logger.warning(f"⚠️  {request.method} {request.url.path} returned {response.status_code}")
+        
         return response
+    except ValueError as e:
+        logger.error(f"❌ ValueError in {request.method} {request.url.path}: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Bad request", "detail": str(e)}
+        )
+    except KeyError as e:
+        logger.error(f"❌ KeyError in {request.method} {request.url.path}: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Missing required field", "detail": str(e)}
+        )
     except Exception as e:
-        logger.error(f"❌ Unhandled error in {request.method} {request.url.path}: {e}", exc_info=True)
+        logger.error(f"❌ Unhandled error in {request.method} {request.url.path}: {str(e)}", exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"error": "Internal server error", "detail": str(e)}
+            content={"error": "Internal server error", "detail": "An unexpected error occurred. Check server logs."}
         )
 
 
 # Request/response logging middleware
 @app.middleware("http")
 async def logging_middleware(request: Request, call_next):
-    """Log all requests and responses"""
-    logger.debug(f"→ {request.method} {request.url.path}")
+    """Log all HTTP requests and responses"""
+    import time
+    from starlette.datastructures import MutableHeaders
+    
+    start_time = time.time()
+    
+    # Log request info
+    logger.info(f"→ {request.method} {request.url.path}")
+    if request.query_params:
+        logger.debug(f"  Query: {dict(request.query_params)}")
+    
     response = await call_next(request)
-    logger.debug(f"← {request.method} {request.url.path} {response.status_code}")
+    
+    # Log response info
+    process_time = time.time() - start_time
+    logger.info(f"← {request.method} {request.url.path} {response.status_code} ({process_time:.2f}s)")
+    
     return response
 
 

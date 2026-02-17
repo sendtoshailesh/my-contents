@@ -31,6 +31,7 @@ Enable a single user to create accurate, compelling, visual-first content for so
 - Do not store secrets in the repository.
 - Avoid including private or sensitive data in generated content without explicit user approval.
 - Treat all user inputs as confidential to the session.
+- Ensure temporary files containing sensitive data (e.g., certificates, secrets) are created in the local system's temporary directory, not in cloud-synced folders.
 
 ## User Control and Transparency
 

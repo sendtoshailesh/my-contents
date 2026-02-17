@@ -49,22 +49,27 @@ st.markdown("View and continue your previous content sessions.")
 API_URL = "http://localhost:8000/api"
 
 # Fetch sessions
-try:
-    with st.spinner("⏳ Loading sessions..."):
+def load_sessions():
+    try:
         response = requests.get(f"{API_URL}/sessions", timeout=10)
         response.raise_for_status()
         data = response.json()
         sessions = data.get('sessions', [])
         total = data.get('total', 0)
-except requests.exceptions.RequestException as e:
-    st.error(f"❌ Error loading sessions: {str(e)}")
-    frontend_logger.error(f"Error loading sessions: {e}")
-    sessions = []
-    total = 0
+        return sessions, total
+    except requests.exceptions.ConnectionError:
+        return [], 0
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Error loading sessions: {str(e)}")
+        frontend_logger.error(f"Error loading sessions: {e}")
+        return [], 0
+
+with st.spinner("⏳ Loading sessions..."):
+    sessions, total = load_sessions()
 
 # Display stats
 if total > 0:
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 0.8])
     
     with col1:
         st.metric("Total Sessions", total)
@@ -80,6 +85,10 @@ if total > 0:
     with col4:
         abandoned = len([s for s in sessions if s.get('status') == 'abandoned'])
         st.metric("Abandoned", abandoned)
+    
+    with col5:
+        if st.button("🔄 Refresh", use_container_width=True):
+            st.rerun()
     
     st.divider()
     
@@ -133,11 +142,48 @@ if total > 0:
                     st.markdown(f"**Updated**: {session_row['Updated']}")
                 
                 with col2:
-                    if st.button("▶️ Continue", key=f"continue_{session_id}", type="primary"):
-                        st.info(f"🔄 Continuing session {session_id}")
+                    col_resume, col_export, col_delete = st.columns(3)
                     
-                    if st.button("🗑️ Delete", key=f"delete_{session_id}"):
-                        st.warning("⚠️ Delete functionality not yet implemented")
+                    with col_resume:
+                        if st.button("▶️ Resume", key=f"resume_{session_id}", type="primary", use_container_width=True):
+                            st.session_state.continue_session_id = session_id
+                            st.success(f"✅ Session {session_id[:8]}... loaded. Continuing...")
+                            st.switch_page("pages/1_New_Session.py")
+                    
+                    with col_export:
+                        if st.button("📥 Export", key=f"export_{session_id}", use_container_width=True):
+                            try:
+                                export_response = requests.post(
+                                    f"{API_URL}/sessions/{session_id}/export",
+                                    timeout=10
+                                )
+                                export_response.raise_for_status()
+                                export_data = export_response.json()
+                                
+                                st.download_button(
+                                    label="💾 Download JSON",
+                                    data=export_data.get('json_content', '{}'),
+                                    file_name=f"session_{session_id[:8]}.json",
+                                    mime="application/json",
+                                    key=f"download_{session_id}"
+                                )
+                            except Exception as e:
+                                st.error(f"❌ Export failed: {str(e)}")
+                                frontend_logger.error(f"Export error: {e}")
+                    
+                    with col_delete:
+                        if st.button("🗑️ Delete", key=f"delete_{session_id}", use_container_width=True):
+                            try:
+                                delete_response = requests.delete(
+                                    f"{API_URL}/sessions/{session_id}",
+                                    timeout=10
+                                )
+                                delete_response.raise_for_status()
+                                st.success(f"✅ Session deleted")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Delete failed: {str(e)}")
+                                frontend_logger.error(f"Delete error: {e}")
         else:
             st.info("📭 No sessions found. Create a new session to get started!")
     

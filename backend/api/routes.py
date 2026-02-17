@@ -6,7 +6,7 @@ All endpoints for session management, content generation, and feedback
 from fastapi import APIRouter, HTTPException, Query, Path, BackgroundTasks
 from typing import List, Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import json
 
@@ -29,6 +29,8 @@ from backend.utils.reference_data import get_reference_data
 from backend.orchestration.state_graph import run_us1_workflow
 from backend.agents.storytelling_agent import get_storytelling_agent
 from backend.agents.content_agent import get_content_agent
+from backend.agents.platform_agent import get_platform_agent
+from backend.agents.iteration_handler import get_iteration_handler
 
 logger = logging.getLogger(__name__)
 
@@ -593,19 +595,404 @@ def _build_visual_plan_response(visual_plan: List[dict]) -> VisualPlan:
     )
 
 
-# ============= Stub Endpoints (To Be Implemented in Phase 3) =============
+# ============= Platform & Iteration Endpoints (Phase 5: User Story 3) =============
 
-@router.post("/sessions/{session_id}/outline")
-async def generate_outline(session_id: str):
-    """Generate outline from topic (Phase 3: User Story 1)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented - Phase 3")
+@router.post("/sessions/{session_id}/platforms", response_model=PlatformVersionList)
+async def generate_platforms(session_id: str, background_tasks: BackgroundTasks):
+    """
+    Generate platform-specific versions for all 6 platforms.
+    
+    Prerequisites:
+    - Session must have approved outline
+    - Content draft must exist
+    
+    Generates versions for:
+    - LinkedIn (professional, 500-3000 chars)
+    - Twitter/X (thread, 280-28000 chars)
+    - Reddit (authentic, 300-40000 chars)
+    - Medium (narrative, 1000-10000 chars)
+    - Substack (newsletter, 800-8000 chars)
+    - Instagram (visual-first, 100-2200 chars)
+    
+    Returns platform versions immediately.
+    """
+    logger.info(f"[API] Generating platforms for session {session_id}")
+    
+    # Verify session exists and has content draft
+    db = get_db_session()
+    try:
+        session = db.query(Session).filter(Session.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
+        
+        # Check for content draft
+        draft = db.query(ContentDraft).filter(
+            ContentDraft.session_id == session_id
+        ).first()
+        
+        if not draft:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot generate platforms without content draft. Generate content first."
+            )
+        
+        # Update session status
+        session.status = "generating_platforms"
+        session.updated_at = datetime.utcnow()
+        db.commit()
+        
+    finally:
+        db.close()
+    
+    # Generate platform versions (synchronous for now, can be async)
+    try:
+        platform_agent = get_platform_agent()
+        versions = platform_agent.generate_all_platforms(session_id=session_id)
+        
+        # Retrieve saved versions from database
+        db = get_db_session()
+        try:
+            platform_versions = db.query(PlatformVersion).filter(
+                PlatformVersion.session_id == session_id
+            ).all()
+            
+            # Update session status
+            session = db.query(Session).filter(Session.id == session_id).first()
+            session.status = "platform_review"
+            session.updated_at = datetime.utcnow()
+            db.commit()
+            
+            # Format response
+            versions_list = []
+            for pv in platform_versions:
+                versions_list.append(PlatformVersionResponse(
+                    platform_name=pv.platform_name,
+                    version=pv.version,
+                    content=pv.content,
+                    character_count=len(pv.content),
+                    created_at=pv.created_at.isoformat()
+                ))
+            
+            return PlatformVersionList(
+                session_id=session_id,
+                versions=versions_list,
+                total_platforms=len(versions_list),
+                status="platform_review"
+            )
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        logger.error(f"[API] Failed to generate platforms: {e}")
+        
+        # Update session status to error
+        db = get_db_session()
+        try:
+            session = db.query(Session).filter(Session.id == session_id).first()
+            if session:
+                session.status = "error"
+                session.updated_at = datetime.utcnow()
+                db.commit()
+        finally:
+            db.close()
+        
+        raise HTTPException(status_code=500, detail=f"Failed to generate platforms: {str(e)}")
 
-@router.post("/sessions/{session_id}/platforms")
-async def generate_platforms(session_id: str):
-    """Generate platform-specific versions (Phase 5: User Story 3)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented - Phase 5")
 
-@router.post("/sessions/{session_id}/iterate")
-async def iterate_content(session_id: str):
-    """Iterate content based on feedback (Phase 5: User Story 3)"""
-    raise HTTPException(status_code=501, detail="Not yet implemented - Phase 5")
+@router.post("/sessions/{session_id}/iterate", response_model=IterationFeedbackResponse)
+async def iterate_content(session_id: str, request: IterationRequest):
+    """
+    Process user feedback and regenerate content.
+    
+    Feedback Areas:
+    - tone: Adjust formality, emotion, voice
+    - depth: More/less detail, technical depth
+    - visuals: Add/remove/modify visual elements
+    - technicality: Increase/decrease technical complexity
+    - humor: Adjust humor level
+    - examples: Add/remove/change examples
+    - structure: Reorganize sections, flow
+    
+    Affected Components:
+    - content_draft: Main content body
+    - platform_versions: Platform-specific adaptations
+    - visuals: Visual plan and diagrams
+    
+    Can iterate multiple times until user says "ok and good".
+    """
+    logger.info(f"[API] Processing iteration for session {session_id}")
+    
+    # Verify session exists
+    db = get_db_session()
+    try:
+        session = db.query(Session).filter(Session.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
+        
+        if session.status == "completed":
+            raise HTTPException(
+                status_code=400,
+                detail="Session already completed. Cannot iterate further."
+            )
+    finally:
+        db.close()
+    
+    # Process feedback
+    try:
+        iteration_handler = get_iteration_handler()
+        result = iteration_handler.process_feedback(
+            session_id=session_id,
+            feedback_areas=request.feedback_areas,
+            feedback_text=request.feedback_text,
+            affected_components=request.affected_components,
+            specific_platforms=request.specific_platforms
+        )
+        
+        return IterationFeedbackResponse(
+            session_id=session_id,
+            iteration_number=result["iteration_number"],
+            affected_components=result["affected_components"],
+            regenerated_content=result["regenerated_content"],
+            updated_platform_versions=result["updated_platform_versions"],
+            status=result["status"],
+            message=f"Iteration #{result['iteration_number']} completed. Review updated content."
+        )
+        
+    except ValueError as e:
+        logger.error(f"[API] Invalid feedback: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"[API] Failed to process iteration: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process feedback: {str(e)}")
+
+
+@router.post("/sessions/{session_id}/complete", response_model=SessionSummary)
+async def complete_session(session_id: str, request: SessionComplete):
+    """
+    Mark session as complete with "ok and good" phrase.
+    
+    Validates completion phrase and finalizes session.
+    """
+    logger.info(f"[API] Completing session {session_id}")
+    
+    try:
+        iteration_handler = get_iteration_handler()
+        result = iteration_handler.complete_session(
+            session_id=session_id,
+            completion_phrase=request.completion_phrase
+        )
+        
+        return SessionSummary(
+            session_id=result["session_id"],
+            status=result["status"],
+            completed_at=result["completed_at"],
+            iteration_count=result["iteration_count"],
+            summary=result["summary"]
+        )
+        
+    except ValueError as e:
+        logger.error(f"[API] Invalid completion phrase: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"[API] Failed to complete session: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to complete session: {str(e)}")
+
+
+# ============= Session Management (Phase 6) =============
+
+@router.delete("/sessions/{session_id}")
+async def delete_session(session_id: str = Path(..., description="Session ID")):
+    """Delete a session and all related data"""
+    try:
+        db = get_db_session()
+        session = db.query(Session).filter(Session.id == session_id).first()
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Delete session (cascades to related data)
+        db.delete(session)
+        db.commit()
+        logger.info(f"✅ Deleted session {session_id}")
+        
+        return BaseResponse(
+            success=True,
+            message=f"Session {session_id} deleted"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error deleting session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+@router.post("/sessions/{session_id}/export")
+async def export_session(session_id: str = Path(..., description="Session ID")):
+    """Export session data as JSON"""
+    try:
+        db = get_db_session()
+        session = db.query(Session).filter(Session.id == session_id).first()
+        
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Collect session data
+        export_data = {
+            "session": {
+                "id": session.id,
+                "topic": session.topic,
+                "url": session.url,
+                "status": session.status,
+                "iteration_count": session.iteration_count,
+                "created_at": session.created_at.isoformat(),
+                "updated_at": session.updated_at.isoformat()
+            },
+            "outline": None,
+            "content": None,
+            "platforms": [],
+            "iterations": []
+        }
+        
+        # Get outline if exists
+        outline = db.query(Outline).filter(Outline.session_id == session_id).first()
+        if outline:
+            sections = json.loads(outline.sections) if isinstance(outline.sections, str) else outline.sections
+            export_data["outline"] = {
+                "content_angle": outline.content_angle,
+                "target_audience": outline.target_audience,
+                "primary_intent": outline.primary_intent,
+                "sections": sections,
+                "user_approved": bool(outline.user_approved),
+                "created_at": outline.created_at.isoformat()
+            }
+        
+        # Get content draft if exists
+        draft = db.query(ContentDraft).filter(ContentDraft.session_id == session_id).first()
+        if draft:
+            export_data["content"] = {
+                "body_text": draft.body_text,
+                "framework_choice": draft.framework_choice,
+                "created_at": draft.created_at.isoformat(),
+                "updated_at": draft.updated_at.isoformat()
+            }
+        
+        # Get platform versions
+        platforms = db.query(PlatformVersion).filter(PlatformVersion.session_id == session_id).all()
+        export_data["platforms"] = [
+            {
+                "platform_name": p.platform_name,
+                "version": p.version,
+                "content": p.content,
+                "created_at": p.created_at.isoformat()
+            }
+            for p in platforms
+        ]
+        
+        # Get iteration feedback
+        iterations = db.query(IterationFeedback).filter(IterationFeedback.session_id == session_id).all()
+        export_data["iterations"] = [
+            {
+                "iteration_number": it.iteration_number,
+                "feedback_areas": json.loads(it.feedback_areas) if isinstance(it.feedback_areas, str) else it.feedback_areas,
+                "feedback_text": it.feedback_text,
+                "created_at": it.created_at.isoformat()
+            }
+            for it in iterations
+        ]
+        
+        logger.info(f"✅ Exported session {session_id}")
+        
+        return {"success": True, "json_content": json.dumps(export_data, indent=2)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error exporting session: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+@router.post("/sessions/cleanup/abandoned")
+async def cleanup_abandoned_sessions():
+    """Delete all abandoned sessions"""
+    try:
+        db = get_db_session()
+        abandoned = db.query(Session).filter(Session.status == 'abandoned').all()
+        count = len(abandoned)
+        
+        for session in abandoned:
+            db.delete(session)
+        
+        db.commit()
+        logger.info(f"✅ Cleaned up {count} abandoned sessions")
+        
+        return {"success": True, "deleted_count": count}
+    except Exception as e:
+        logger.error(f"❌ Error cleaning up abandoned sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+@router.post("/sessions/cleanup/old")
+async def cleanup_old_sessions(request_body: Optional[dict] = None):
+    """Delete sessions older than specified days"""
+    try:
+        days = 30
+        if request_body and isinstance(request_body, dict):
+            days = request_body.get('days', 30)
+        
+        db = get_db_session()
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        old_sessions = db.query(Session).filter(Session.created_at < cutoff_date).all()
+        count = len(old_sessions)
+        
+        for session in old_sessions:
+            db.delete(session)
+        
+        db.commit()
+        logger.info(f"✅ Cleaned up {count} sessions older than {days} days")
+        
+        return {"success": True, "deleted_count": count}
+    except Exception as e:
+        logger.error(f"❌ Error cleaning up old sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+@router.post("/sessions/backup")
+async def backup_all_sessions():
+    """Backup all sessions as JSON"""
+    try:
+        db = get_db_session()
+        sessions = db.query(Session).all()
+        
+        backup_data = {
+            "backup_date": datetime.utcnow().isoformat(),
+            "total_sessions": len(sessions),
+            "sessions": []
+        }
+        
+        for session in sessions:
+            session_export = {
+                "session": {
+                    "id": session.id,
+                    "topic": session.topic,
+                    "status": session.status,
+                    "created_at": session.created_at.isoformat()
+                }
+            }
+            backup_data["sessions"].append(session_export)
+        
+        logger.info(f"✅ Backed up {len(sessions)} sessions")
+        
+        return {"success": True, "backup_json": json.dumps(backup_data, indent=2)}
+    except Exception as e:
+        logger.error(f"❌ Error backing up sessions: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()

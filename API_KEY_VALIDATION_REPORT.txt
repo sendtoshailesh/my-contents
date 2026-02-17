@@ -1,0 +1,52 @@
+
+================================================================================
+📊 API KEY VALIDATION REPORT
+================================================================================
+
+📈 Summary:
+   Total Services: 4
+   ✅ Configured: 0
+   ❌ Missing: 4
+   ⚠️  Invalid: 0
+   ⚡ Critical Missing: 2
+
+────────────────────────────────────────────────────────────────────────────────
+📋 Detailed Results:
+────────────────────────────────────────────────────────────────────────────────
+
+❌ MISSING Azure OpenAI (⚡ CRITICAL)
+   Key: AZURE_OPENAI_API_KEY
+   Not configured - will use mock fallback
+
+❌ MISSING Anthropic Claude (OPTIONAL)
+   Key: ANTHROPIC_API_KEY
+   Not configured (optional fallback)
+
+❌ MISSING OpenAI GPT (OPTIONAL)
+   Key: OPENAI_API_KEY
+   Not configured (optional fallback)
+
+❌ MISSING Bing Search (⚡ CRITICAL)
+   Key: BING_SEARCH_API_KEY
+   Not configured - research validation will fail
+
+================================================================================
+💡 Recommendations:
+================================================================================
+
+⚠️  CRITICAL: Required API keys are missing!
+   System will use MOCK fallback - real functionality unavailable.
+
+   📝 Setup Instructions:
+   1. Run: python scripts/setup_secrets.py
+   2. Follow prompts to configure API keys
+   3. Restart backend: uvicorn backend.main:app --reload --port 8000
+   4. Re-run tests: python tests/test_e2e_comprehensive.py
+
+   ❌ Missing: Azure OpenAI
+      Set: AZURE_OPENAI_API_KEY
+
+   ❌ Missing: Bing Search
+      Set: BING_SEARCH_API_KEY
+
+================================================================================

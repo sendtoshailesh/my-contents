@@ -1,0 +1,37 @@
+# Core Web Framework
+fastapi>=0.100
+uvicorn>=0.23
+pydantic>=2.0
+
+# LLM & Agents
+langchain>=0.0.300
+langchain-community>=0.0.5
+langchain-anthropic>=0.1
+langchain-openai>=0.0.13
+
+# APIs
+requests>=2.31
+beautifulsoup4>=4.12
+
+# Database
+sqlalchemy>=2.0
+alembic>=1.12
+
+# Secrets & Config
+keyring>=24.0
+python-dotenv>=1.0
+pyyaml>=6.0
+
+# Utilities
+python-dateutil>=2.8
+pytz>=2023.3
+
+# Frontend
+streamlit>=1.28
+plotly>=5.18
+pandas>=2.1
+
+# Dev Tools
+pytest>=7.4
+black>=23.0
+flake8>=6.0

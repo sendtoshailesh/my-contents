@@ -517,6 +517,16 @@ def get_model_router() -> ModelRouter:
     return _model_router
 
 
+def get_llm_service() -> ModelRouter:
+    """
+    Get LLM service instance (alias for get_model_router).
+    
+    Returns:
+        ModelRouter: LLM router instance
+    """
+    return get_model_router()
+
+
 # Example usage and testing
 if __name__ == "__main__":
     import sys

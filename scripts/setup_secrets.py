@@ -60,12 +60,12 @@ def setup_keyring_secrets():
         "azure-ai-key": {
             "prompt": "Azure AI Foundry API Key",
             "description": "Get from https://ai.azure.com/ → Project Settings → API Keys",
-            "optional": False,
+            "optional": True,
         },
         "bing-search-key": {
             "prompt": "Bing Search API Key",
             "description": "Get from Azure Portal → Bing Search Resource → Keys and Endpoint",
-            "optional": False,
+            "optional": True,
         },
         "anthropic-api-key": {
             "prompt": "Anthropic API Key (Claude)",

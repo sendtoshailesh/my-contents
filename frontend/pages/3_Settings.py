@@ -8,6 +8,9 @@ import streamlit as st
 from datetime import datetime
 import sys
 from pathlib import Path
+import requests
+import json
+import pandas as pd
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -44,7 +47,7 @@ st.markdown("# ⚙️ Settings")
 st.markdown("Configure your Content Studio preferences and API keys.")
 
 # Create tabs
-tab1, tab2, tab3, tab4 = st.tabs(["API Keys", "Preferences", "About", "Help"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["API Keys", "Preferences", "Session Management", "About", "Help"])
 
 # TAB 1: API Keys
 with tab1:
@@ -138,6 +141,13 @@ with tab2:
     with col1:
         st.markdown("### Content Generation")
         
+        st.markdown("**Preferred LLM Model**")
+        preferred_model = st.selectbox(
+            "Select your preferred LLM",
+            ["GPT-4", "Claude 3", "Llama 2", "Auto-select (fastest available)", "Balanced (quality/cost)"],
+            help="Model used for content generation. Auto-select will try models in order."
+        )
+        
         default_framework = st.selectbox(
             "Default Framework",
             ["TED Talk", "Hero's Journey", "Problem-Solution", "Listicle", "Comparison", "Tutorial"],
@@ -160,7 +170,7 @@ with tab2:
         )
     
     with col2:
-        st.markdown("### UI Preferences")
+        st.markdown("### UI & Visual Preferences")
         
         theme = st.selectbox(
             "Theme",
@@ -179,13 +189,135 @@ with tab2:
             value=True,
             help="Automatically save content as you work"
         )
+        
+        st.markdown("**Visual Preferences**")
+        include_visuals = st.checkbox(
+            "Include visuals in content",
+            value=True,
+            help="Generate visual plans with Mermaid diagrams"
+        )
+        
+        visual_types = st.multiselect(
+            "Preferred visual types",
+            ["Flowchart", "Timeline", "Comparison Table", "Mindmap", "Sequence Diagram"],
+            default=["Flowchart", "Timeline"],
+            help="Which visual types you prefer"
+        )
     
     if st.button("💾 Save Preferences", type="primary"):
         st.success("✅ Preferences saved")
-        frontend_logger.info(f"Preferences updated: framework={default_framework}, confidence={min_confidence}")
+        frontend_logger.info(f"Preferences: model={preferred_model}, framework={default_framework}, visuals={include_visuals}, confidence={min_confidence}")
 
-# TAB 3: About
+# TAB 3: Session Management
 with tab3:
+    st.markdown("## 📊 Session Management")
+    
+    st.markdown("### Session Limits")
+    st.info(
+        "💡 You can have a maximum of 10 active sessions. Older sessions are automatically archived.",
+        icon="💡"
+    )
+    
+    try:
+        import requests
+        response = requests.get("http://localhost:8000/api/sessions", timeout=10)
+        if response.status_code == 200:
+            sessions = response.json().get('sessions', [])
+            st.markdown(f"**Current Sessions**: {len(sessions)} / 10")
+        else:
+            st.warning("Unable to fetch session count")
+    except Exception as e:
+        st.warning(f"Unable to connect to backend: {str(e)}")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        session_auto_cleanup = st.checkbox(
+            "Auto-cleanup old sessions",
+            value=True,
+            help="Automatically delete sessions older than 30 days"
+        )
+    
+    with col2:
+        cleanup_age_days = st.select_slider(
+            "Delete sessions older than",
+            options=[7, 14, 30, 60, 90],
+            value=30,
+            help="Sessions older than this will be auto-deleted"
+        )
+    
+    with col3:
+        st.markdown("")  # Spacing
+    
+    st.divider()
+    
+    st.markdown("### Manual Cleanup")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🗑️ Delete All Abandoned Sessions", use_container_width=True):
+            try:
+                response = requests.post(
+                    "http://localhost:8000/api/sessions/cleanup/abandoned",
+                    timeout=10
+                )
+                if response.status_code in [200, 201]:
+                    result = response.json()
+                    st.success(f"✅ Deleted {result.get('deleted_count', 0)} abandoned sessions")
+                    frontend_logger.info("Cleaned up abandoned sessions")
+                else:
+                    st.error("Failed to cleanup sessions")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                frontend_logger.error(f"Cleanup error: {e}")
+    
+    with col2:
+        if st.button("🗑️ Delete All Old Sessions (30+ days)", use_container_width=True):
+            try:
+                response = requests.post(
+                    "http://localhost:8000/api/sessions/cleanup/old",
+                    json={"days": 30},
+                    timeout=10
+                )
+                if response.status_code in [200, 201]:
+                    result = response.json()
+                    st.success(f"✅ Deleted {result.get('deleted_count', 0)} old sessions")
+                    frontend_logger.info("Cleaned up old sessions")
+                else:
+                    st.error("Failed to cleanup sessions")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                frontend_logger.error(f"Cleanup error: {e}")
+    
+    st.divider()
+    
+    st.markdown("### Backup & Export")
+    
+    if st.button("📦 Backup All Sessions as JSON", use_container_width=True):
+        try:
+            response = requests.post(
+                "http://localhost:8000/api/sessions/backup",
+                timeout=30
+            )
+            if response.status_code in [200, 201]:
+                backup_data = response.json()
+                import json
+                st.download_button(
+                    label="📥 Download Backup",
+                    data=backup_data.get('backup_json', '{}'),
+                    file_name=f"sessions_backup.json",
+                    mime="application/json"
+                )
+                frontend_logger.info("Backup created")
+            else:
+                st.error("Failed to create backup")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+            frontend_logger.error(f"Backup error: {e}")
+
+# TAB 4: About
+with tab4:
     st.markdown("## ℹ️ About Content Studio")
     
     col1, col2 = st.columns(2)
@@ -238,8 +370,8 @@ with tab3:
         LLM integration, data privacy, and user design.
         """)
 
-# TAB 4: Help
-with tab4:
+# TAB 5: Help
+with tab5:
     st.markdown("## 🆘 Help & Troubleshooting")
     
     with st.expander("❓ How do I get started?"):

@@ -1,154 +1,375 @@
-# Quickstart: Personal AI Content Studio MVP
+# Quickstart: Personal AI Content Studio MVP - v0.1.0
 
-**Target Audience**: Developers setting up local development and first-time users of the system.  
-**Duration**: ~15 minutes for setup, ~20 minutes for first content session.  
-**Assumes**: Python 3.11+, basic CLI knowledge.
+**Phase**: 6 (Final - Polish & Cross-Cutting Concerns)  
+**Target Audience**: Developers and content creators  
+**Setup Time**: ~10 minutes | First Session: ~15-20 minutes  
+**Requirements**: Python 3.10+, API keys (OpenAI/Claude, Bing Search)
 
 ---
 
-## Part 1: Local Development Setup
+## Part 1: Setup (10 minutes)
 
-### Step 1: Clone & Install Dependencies
+### 1.1 Install & Configure
 
 ```bash
-# Clone the repository
-git clone <repo-url> my-contents
-cd my-contents
+# Navigate to project
+cd /Users/shaileshmishra/my-docs/my-proj/my-contents
 
-# Create virtual environment
-python3.11 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Setup virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure Environment Variables
+### 1.2 Configure API Keys
 
+**Option A: .env file** (easiest for local dev)
 ```bash
-# Copy the example .env file
-cp .env.example .env
-
-# Edit .env with your API keys
-# Required:
-# - LLM_PROVIDER=anthropic or openai
-# - LLM_API_KEY=your_key_here
-# - TAVILY_API_KEY=your_key_here
-
-# Open .env in your editor
-code .env  # or nano, vim, etc.
+# Create .env in project root
+cat > .env << EOF
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+BING_SEARCH_API_KEY=...
+EOF
 ```
 
-**Important**: `.env` is in `.gitignore` and should never be committed.
-
-### Step 3: Initialize SQLite Database
-
+**Option B: OS Keyring** (more secure)
 ```bash
-# Create database schema
-python -m backend.setup_db
-
-# Verify database exists
-ls sessions.db  # Should show database file
+# macOS Keychain
+security add-generic-password -s openai -a $USER -w your_key_here
+security add-generic-password -s anthropic -a $USER -w your_key_here
+security add-generic-password -s bing_search -a $USER -w your_key_here
 ```
 
-### Step 4: Start Backend Server
+See `HYBRID_SECRETS_QUICK_START.md` for details.
 
+### 1.3 Start Servers
+
+**Terminal 1: Backend API** (http://localhost:8000)
 ```bash
-# Terminal 1: Backend (FastAPI)
-cd backend
-uvicorn main:app --reload --port 8000
-
-# You should see:
-# INFO:     Uvicorn running on http://127.0.0.1:8000
-# INFO:     Application startup complete
+python backend/main.py
 ```
 
-### Step 5: Start Frontend (Streamlit)
-
-```bash
-# Terminal 2: Frontend (Streamlit)
-streamlit run frontend/app.py
-
-# You should see:
-# You can now view your Streamlit app in your browser.
-# Local URL: http://localhost:8501
+You should see:
+```
+✅ Database initialized
+✅ API routes registered
+🚀 Starting server on http://localhost:8000
 ```
 
-**Success**: Both servers running! Open `http://localhost:8501` in your browser.
+**Terminal 2: Frontend UI** (http://localhost:8501)
+```bash
+streamlit run frontend/Home.py
+```
+
+You should see:
+```
+Local URL: http://localhost:8501
+Network URL: http://192.168.x.x:8501
+```
+
+Open **http://localhost:8501** in your browser ✨
 
 ---
 
-## Part 2: First Content Session Walkthrough
+## Part 2: First Session (15-20 minutes)
 
-### Scenario
+### Scenario: Create LinkedIn Post
 
-You're creating a LinkedIn post about **"LLMs and Emotional Intelligence in Leadership."**
+Topic: **"AI-Assisted Decision Making in Remote Teams"**
 
-#### Step 1: Topic Intake
+### Step 1: Create Session (1-2 min)
 
-**In the UI (Streamlit)**:
+1. Click **"New Session"** in sidebar
+2. Enter topic: `AI-Assisted Decision Making in Remote Teams`
+3. Click **"Create Session"** button
+4. System extracts topic and shows: ✅ Session created
 
-1. Click **"New Content Session"**
-2. Select input type: **"Topic Name + Description"**
-3. Enter topic: `"LLMs and Emotional Intelligence in Leadership"`
-4. Optional context: `"For technical leaders who want to understand both the tech and the human side."`
-5. Click **"Analyze Topic"**
+**Behind the scenes**:
+- Input Agent classifies topic
+- Reasoning Agent generates outline with web research
+- Research Agent validates claims (70% confidence threshold)
 
-**Behind the Scenes**:
-- **Input Agent** extracts metadata:
-  - Theme: "AI applications in leadership"
-  - Audience: "Technical leaders"
-  - Intent: "Educate + Inspire"
-  - Depth: "Intermediate"
-  - Focus Areas: `["AI/ML/GenAI", "Emotional Intelligence"]`
+### Step 2: Review & Approve Outline (3-5 min)
 
-**UI Output**:
-```
-✓ Topic accepted
-✓ Focus areas: AI/ML/GenAI, Emotional Intelligence
-→ Next: Wait for outline generation...
-```
-
----
-
-#### Step 2: Outline Generation
-
-**Automatic** (takes ~30 seconds):
-
-**Reasoning Agent** generates outline:
-```
-Content Angle: "How LLM-powered tools can augment (not replace) 
-  emotional intelligence in modern leadership"
-
-Why Compelling: "Technical leaders struggle with EI; LLMs offer 
-  a bridge to self-awareness and better team dynamics."
-
-Sections:
-  1. Hook: The paradox of smarter AI, lonelier leaders
-  2. Problem: Why EI matters more than ever in tech
-  3. Insight: How LLMs help—by providing real-time feedback
-  4. Real-world case: A tech team using EI + LLM coaching
-  5. Actionable: 3 ways to leverage LLMs for team development
-  6. Takeaway: EI + AI = next-gen leadership
-```
-
-**UI Output**:
+**You see**:
 ```
 📋 Outline Generated
 
-[Show outline structure + why_compelling]
+Content Angle: How AI tools bridge decision gaps in remote teams
 
-→ Next: Fact-checking outline...
+Why Compelling: Remote teams lack real-time feedback; AI helps async collaboration
+
+Sections:
+  1. The remote work reality
+  2. Decision-making challenges
+  3. AI as the great equalizer
+  4. Real-world example: Team using Claude for brainstorms
+  5. 3 practical applications
+  6. When NOT to use AI
+
+Research Results:
+  ✅ Confidence: 78%
+  ✅ Sources found: 12
+  ✅ Passed validation
+```
+
+- Review content
+- If confidence < 70%, click "Regenerate"
+- If happy, click **"✅ Approve Outline"**
+
+### Step 3: Select Framework (2 min)
+
+**Choose from 6 storytelling frameworks**:
+- 🎬 **TED Talk**: Narrative + insight
+- ⚔️ **Hero's Journey**: Challenge + transformation
+- 💡 **Problem-Solution**: Issue + actionable fix
+- 📊 **Listicle**: Numbered tips
+- ⚖️ **Comparison**: Side-by-side analysis  
+- 📚 **Tutorial**: Step-by-step guide
+
+**Select**: Problem-Solution (most relevant)
+→ System recommends framework and shows visual plan
+
+### Step 4: Generate Content (3-5 min)
+
+Click **"Generate Content"** → AI creates multi-section draft
+
+**Output**:
+```
+# AI-Assisted Decision Making in Remote Teams
+
+## The Problem
+Remote teams lack real-time feedback loops...
+
+## The Solution
+AI tools provide async decision support...
+
+[Includes visuals, links, code examples if relevant]
+```
+
+### Step 5: Adapt for Platforms (2-3 min)
+
+Click **"Generate Platform Versions"** → System creates:
+- 📌 **LinkedIn**: Professional, 500-3000 chars
+- 𝕏 **Twitter/X**: Thread format, 280-28K chars
+- 🤖 **Reddit**: Authentic, discussion-focused
+- 📖 **Medium**: Long-form, technical depth
+- 📧 **Substack**: Newsletter, personal voice
+- 📸 **Instagram**: Visual-first, captions
+
+### Step 6: Iterate (Optional - 3-5 min)
+
+Feedback? Click **"Get Feedback"** and specify:
+- **Tone**: More conversational/formal/technical
+- **Depth**: Add more details/simplify
+- **Examples**: More/fewer real-world examples
+- **Structure**: Reorganize sections
+
+System regenerates based on feedback.
+
+### Step 7: Complete (< 1 min)
+
+When satisfied:
+1. Click **"✅ Mark Complete"**
+2. Type: `ok and good`
+3. System saves session to history
+
+**Session now appears in History tab** ✨
+
+---
+
+## Part 3: Advanced Features
+
+### Session Management (Settings tab)
+
+**View current sessions**:
+- Settings → Session Management
+- See count: X / 10 active sessions
+
+**Manual cleanup**:
+- Delete abandoned sessions
+- Delete sessions > 30 days old
+- Auto-cleanup removes sessions at startup
+
+**Backup all sessions**:
+- Settings → Backup & Export
+- Download JSON with all sessions
+- Useful for archiving completed work
+
+### Preferences (Settings tab)
+
+**Configure defaults**:
+- Preferred LLM model (GPT-4, Claude 3, etc.)
+- Default framework
+- Visual preferences
+- Confidence threshold
+
+### View History (History tab)
+
+**Three views**:
+1. **All Sessions**: Complete list with stats
+2. **In Progress**: Currently active sessions
+3. **Completed**: Finished content
+
+**Actions**:
+- **Resume**: Continue unfinished session
+- **Export**: Download session as JSON
+- **Delete**: Remove session
+
+---
+
+## Part 4: API Usage (Advanced)
+
+### REST API Endpoints
+
+**Create session**:
+```bash
+curl -X POST http://localhost:8000/api/sessions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "topic": "Your topic here",
+    "url": "optional_url"
+  }'
+```
+
+**List sessions**:
+```bash
+curl http://localhost:8000/api/sessions
+```
+
+**Get session details**:
+```bash
+curl http://localhost:8000/api/sessions/{session_id}
+```
+
+**Export session**:
+```bash
+curl -X POST http://localhost:8000/api/sessions/{session_id}/export
+```
+
+See `/api/docs` for complete OpenAPI documentation.
+
+---
+
+## 📊 Database Location
+
+All data stored locally:
+```
+~/.content-studio/
+├── sessions.db          # SQLite database
+├── app.log             # Backend logs
+└── streamlit.log       # Frontend logs
+```
+
+**To inspect database**:
+```bash
+sqlite3 ~/.content-studio/sessions.db
+.tables                 # List all tables
+SELECT COUNT(*) FROM sessions;
 ```
 
 ---
 
-#### Step 3: Validation
+## 🐛 Troubleshooting
 
-**Research Agent** validates claims via Tavily:
+### Backend won't start
+```
+Error: Address already in use (port 8000)
+Fix: Kill process on port 8000
+  lsof -ti:8000 | xargs kill -9
+```
 
-**Claims checked**:
-- "EI impacts team retention" → ✓ 3 credible sources found
+### Frontend can't reach backend
+```
+Error: connection refused
+Fix: Ensure backend is running in Terminal 1
+  Check: curl http://localhost:8000/health
+```
+
+### Outline rejected (< 70% confidence)
+```
+Reason: Claims not well-supported
+Fix:
+  - Make topic more specific
+  - Include concrete examples
+  - Reference established concepts
+```
+
+### Sessions not appearing
+```
+Reason: Backend not initialized
+Fix:
+  - Stop and restart backend
+  - Check ~/.content-studio/sessions.db exists
+```
+
+---
+
+## 📈 Performance Notes
+
+**Typical timings**:
+- Outline generation: 30-60 seconds
+- Content generation: 1-2 minutes
+- Platform adaptation: 30-60 seconds
+- Iteration: 1-2 minutes
+
+**Total time per session**: 5-10 minutes (including user review time)
+
+---
+
+## 🔒 Security & Privacy
+
+✅ **All data stays local**
+- No cloud uploads
+- SQLite database in home directory
+- API keys in OS keyring or .env (not committed)
+
+✅ **Secure by default**
+- CORS limited to localhost
+- No external data sharing
+- Logs sanitized (no keys printed)
+
+---
+
+## 📚 Next Steps
+
+1. **Try the walkthrough** above (15 min)
+2. **Explore Settings** to configure preferences
+3. **Check History** to manage sessions
+4. **Review Documentation**:
+   - `README.md` - Full feature overview
+   - `CONTRIBUTING.md` - Development guide
+   - `specs/` - Architecture details
+5. **Read Logs** for insights:
+   - `tail -f ~/.content-studio/app.log`
+
+---
+
+## 🚀 What's Included
+
+**Phase 6 Features** (Complete ✅):
+- ✅ Session history display (max 10)
+- ✅ Resume/export/delete sessions
+- ✅ Settings & configuration UI
+- ✅ Model selection preferences
+- ✅ Visual preferences  
+- ✅ Manual cleanup controls
+- ✅ Backup/export feature
+- ✅ Comprehensive error handling
+- ✅ Request/response logging
+- ✅ User-friendly error messages
+- ✅ Documentation (README, CONTRIBUTING)
+
+**Version**: 0.1.0 MVP  
+**Status**: Phase 6 Complete  
+**Last Updated**: February 16, 2026
+
+---
+
+**Questions?** Check README.md or CONTRIBUTING.md for more details!
 - "LLM feedback can improve self-awareness" → ✓ 2 credible sources
 - "Technical teams struggle with EI" → ✓ 4 credible sources
 
